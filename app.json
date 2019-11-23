@@ -1,0 +1,8 @@
+{
+  "name": "epub-maker",
+  "scripts": {
+    "dokku": {
+      "predeploy": "cd client; npm run build"
+    }
+  }
+}
