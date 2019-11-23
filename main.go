@@ -29,6 +29,17 @@ func renderError(w http.ResponseWriter, message string, statusCode int) {
 	w.Write([]byte(message))
 }
 
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
+}
+
 const maxUploadSize = 5 * 1024 * 1024 // 5 MB
 const uploadPath = "./tmp"
 
@@ -52,11 +63,25 @@ func createEpub(rw http.ResponseWriter, req *http.Request) {
 		epub.AddSection(b.Sections[e].Body, b.Sections[e].Title, "", "")
 	}
 
-	// Set the cover. The CSS file is optional
-	coverImagePath, _ := epub.AddImage("tmp/cover.png", "cover.png")
-	epub.SetCover(coverImagePath, "")
+	var formats [3]string
+	formats[0] = "png"
+	formats[1] = "jpg"
+	formats[2] = "jpeg"
+	for e := range formats {
+		path := "tmp/cover." + formats[e]
+		log.Println(path)
+		isExists, _ := exists(path)
+		if isExists {
+			log.Println("sdfsdf")
+			// Set the cover. The CSS file is optional
+			coverImagePath, _ := epub.AddImage(path, "cover."+formats[e])
+			epub.SetCover(coverImagePath, "")
+			defer os.Remove(path)
+		}
+	}
 
 	filePath := "tmp/book.epub"
+	defer os.Remove(filePath)
 
 	// Write the EPUB
 	err = epub.Write(filePath)
@@ -99,8 +124,7 @@ func uploadCover() http.HandlerFunc {
 		detectedFileType := http.DetectContentType(fileBytes)
 		switch detectedFileType {
 		case "image/jpeg", "image/jpg":
-		case "image/gif", "image/png":
-		case "application/pdf":
+		case "image/png":
 			break
 		default:
 			renderError(w, "INVALID_FILE_TYPE", http.StatusBadRequest)
@@ -131,7 +155,9 @@ func uploadCover() http.HandlerFunc {
 }
 
 func main() {
+	pathToBuild := "./client/build"
+	http.Handle("/", http.FileServer(http.Dir(pathToBuild)))
 	http.HandleFunc("/epubs", createEpub)
 	http.HandleFunc("/covers", uploadCover())
-	log.Fatal(http.ListenAndServe(":8082", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
