@@ -155,6 +155,8 @@ func uploadCover() http.HandlerFunc {
 }
 
 func main() {
+	tmpPath := filepath.Join(".", "tmp")
+	os.MkdirAll(tmpPath, os.ModePerm)
 	pathToBuild := "./client/build"
 	http.Handle("/", http.FileServer(http.Dir(pathToBuild)))
 	http.HandleFunc("/epubs", createEpub)
