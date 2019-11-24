@@ -85,6 +85,9 @@ function Form() {
                     });
                   }}
                 />
+                <small id={index} className="form-text text-muted">
+                  You can use Markdown for adding some styles.
+                </small>
               </div>
             );
           })}

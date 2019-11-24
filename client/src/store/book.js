@@ -1,9 +1,17 @@
+const sectionExample = `
+# Title of section
+
+Hi everyone...
+
+– I'm going to make a epub.
+`.substring(1);
+
 export default store => {
   store.on("@init", () => ({
     book: {
-      title: "",
-      author: "",
-      sections: [{ body: "<h1>Example title</h1><p>Example text</p>" }]
+      title: "Random writer and the cursed epub",
+      author: "Jacob Growling",
+      sections: [{ body: sectionExample }]
     }
   }));
 
