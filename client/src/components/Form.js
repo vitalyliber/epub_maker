@@ -1,7 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import useStoreon from "storeon/react";
 import { bookDownloadApi } from "../api/downloads";
 import { coverUploadApi } from "../api/uploads";
+import notifyError from "../utils/notifyError";
+import notifySuccess from "../utils/notifySuccess";
 
 function Form() {
   const {
@@ -9,6 +11,8 @@ function Form() {
     book,
     book: { author, title, sections }
   } = useStoreon("book");
+
+  const [isCreatingBook, setCreatingBook] = useState(false);
 
   const coverInput = useRef(null);
 
@@ -51,6 +55,7 @@ function Form() {
               type="file"
               className="form-control-file"
               id="file"
+              accept="image/x-png,image/jpeg"
               ref={coverInput}
             />
           </div>
@@ -91,9 +96,27 @@ function Form() {
             Add section
           </button>
           <button
+            disabled={isCreatingBook}
             onClick={async () => {
-              await coverUploadApi(coverInput.current);
-              await bookDownloadApi(book);
+              if (coverInput.current.files[0]) {
+                // limit is 5 mb
+                const sizeInMb = coverInput.current.files[0].size / 1024 / 1024;
+                if (sizeInMb > 5) {
+                  notifyError("Cover size must be less than 5 mb");
+                  return;
+                }
+              }
+              try {
+                setCreatingBook(true);
+                await coverUploadApi(coverInput.current);
+                await bookDownloadApi(book);
+                notifySuccess("Book successfully created");
+              } catch (e) {
+                console.log(e);
+                notifyError("Something went wrong");
+              } finally {
+                setCreatingBook(false);
+              }
             }}
             type="button"
             className="btn btn-success btn-lg btn-block mt-3"
